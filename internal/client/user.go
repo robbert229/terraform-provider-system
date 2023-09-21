@@ -2,13 +2,12 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"github.com/neuspaces/terraform-provider-system/internal/extlib/to"
-	"github.com/neuspaces/terraform-provider-system/internal/lib/typederror"
-	"github.com/neuspaces/terraform-provider-system/internal/system"
 	"strconv"
 	"strings"
+
+	"github.com/neuspaces/terraform-provider-system/internal/extlib/to"
+	"github.com/neuspaces/terraform-provider-system/internal/system"
 )
 
 type User struct {
@@ -34,20 +33,6 @@ func NewUserClient(s system.System) UserClient {
 	}
 }
 
-var (
-	ErrUser = typederror.NewRoot("user resource")
-
-	ErrUserNotFound = typederror.New("user not found", ErrUser)
-
-	ErrUserNameExists = typederror.New("user name exists", ErrUser)
-
-	ErrUserUidExists = typederror.New("user uid exists", ErrUser)
-
-	ErrUserGroupNotFound = typederror.New("primary group not found", ErrUser)
-
-	ErrUserUnexpected = typederror.New("unexpected error", ErrUser)
-)
-
 const (
 	codeUserUnexpected = 1
 
@@ -68,19 +53,20 @@ func (c *userClient) Get(ctx context.Context, uid int) (*User, error) {
 	cmd := NewCommand(fmt.Sprintf(`getent passwd %[1]d`, uid))
 	res, err := ExecuteCommand(ctx, c.s, cmd)
 	if err != nil {
-		return nil, ErrUserUnexpected.Raise(err)
+		return nil, fmt.Errorf("unable to get user metadata for uid(%d): %w", uid, err)
 	}
 
 	if res.ExitCode == codeUserNotFound {
-		return nil, ErrUserNotFound
+		return nil, fmt.Errorf("user was not found")
 	}
+
 	if res.ExitCode != 0 || len(res.Stdout) == 0 {
-		return nil, ErrUserUnexpected
+		return nil, fmt.Errorf("exit code was nonzero, but was given no stdout: %d", res.ExitCode)
 	}
 
 	parsedUser, err := parsePasswdEntry(res.Stdout)
 	if err != nil {
-		return nil, ErrUserUnexpected
+		return nil, fmt.Errorf("failed to parse user metadata entry: %w", err)
 	}
 
 	userSystem := parsedUser.Uid < 1000
@@ -88,19 +74,20 @@ func (c *userClient) Get(ctx context.Context, uid int) (*User, error) {
 	groupCmd := NewCommand(fmt.Sprintf(`getent group %[1]d`, parsedUser.Gid))
 	resGroup, err := ExecuteCommand(ctx, c.s, groupCmd)
 	if err != nil {
-		return nil, ErrUserUnexpected.Raise(err)
+		return nil, fmt.Errorf("unable to get group metadata for gid(%d): %w", parsedUser.Gid, err)
 	}
 
 	if resGroup.ExitCode == codeGroupNotFound {
-		return nil, ErrUserGroupNotFound
+		return nil, fmt.Errorf("group was not found: %w", err)
 	}
+
 	if resGroup.ExitCode != 0 || len(resGroup.Stdout) == 0 {
-		return nil, ErrUserUnexpected
+		return nil, fmt.Errorf("exit code was nonzero, but was given no stdout: %d", resGroup.ExitCode)
 	}
 
 	parsedGroup, err := parseGroupEntry(resGroup.Stdout)
 	if err != nil {
-		return nil, ErrGroupUnexpected
+		return nil, fmt.Errorf("failed to parse group metadata: %w", err)
 	}
 
 	user := &User{
@@ -154,28 +141,28 @@ func (c *userClient) Create(ctx context.Context, u User) (int, error) {
 	cmd := NewCommand(fmt.Sprintf(`useradd %[1]s && getent passwd %[2]s`, strings.Join(args, " "), u.Name))
 	res, err := ExecuteCommand(ctx, c.s, cmd)
 	if err != nil {
-		return -1, ErrUserUnexpected.Raise(err)
+		return -1, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	switch res.ExitCode {
 	case codeUserUidExists:
 		// uid already exists
-		return -1, ErrUserUidExists
+		return -1, fmt.Errorf("failed to create user, user with uid already exists")
 	case codeUserGroupNotFound:
 		// group does not exist
-		return -1, ErrUserGroupNotFound
+		return -1, fmt.Errorf("failed to create user, group does not exist")
 	case codeUserNameExists:
 		// username already exists
-		return -1, ErrUserNameExists
+		return -1, fmt.Errorf("failed to create user, user with username already exists")
 	}
 
 	if res.ExitCode != 0 || len(res.Stdout) == 0 {
-		return -1, ErrUserUnexpected
+		return -1, fmt.Errorf("exit code was nonzero, but was given no stdout: %d", res.ExitCode)
 	}
 
 	createdUser, err := parsePasswdEntry(res.Stdout)
 	if err != nil {
-		return -1, ErrUserUnexpected
+		return -1, fmt.Errorf("failed to parse user metadata; %w", err)
 	}
 
 	return createdUser.Uid, nil
@@ -183,7 +170,7 @@ func (c *userClient) Create(ctx context.Context, u User) (int, error) {
 
 func (c *userClient) Update(ctx context.Context, u User) error {
 	if u.Uid == nil {
-		return ErrUserUnexpected.Raise(errors.New("update requires uid"))
+		return fmt.Errorf("update requires uid")
 	}
 
 	var args []string
@@ -221,7 +208,7 @@ func (c *userClient) Update(ctx context.Context, u User) error {
 	cmd := NewCommand(fmt.Sprintf(`_do() { uid=$1; user=$(getent passwd $uid | cut -d: -f1); [ ! -z "${user}" ] || return %[2]d; %[3]s; return $?; }; _do '%[1]d';`, to.Int(u.Uid), codeUserNotFound, usermodCmd))
 	res, err := ExecuteCommand(ctx, c.s, cmd)
 	if err != nil {
-		return ErrUserUnexpected.Raise(err)
+		return fmt.Errorf("failed to modify user: %w", err)
 	}
 
 	switch res.ExitCode {
@@ -230,12 +217,12 @@ func (c *userClient) Update(ctx context.Context, u User) error {
 		break
 	case codeUserNotFound:
 		// User not found
-		return ErrUserNotFound
+		return fmt.Errorf("failed to modify user, user not found: %s", res.Stderr)
 	case codeUserNameExists:
 		// Username not unique
-		return ErrUserNameExists
+		return fmt.Errorf("failed to modify user, user with specified username does not exist: %s", res.Stderr)
 	default:
-		return ErrUserUnexpected
+		return fmt.Errorf("failed to modify user: %d", res.ExitCode)
 	}
 
 	return nil
@@ -246,7 +233,7 @@ func (c *userClient) Delete(ctx context.Context, uid int) error {
 	cmd := NewCommand(fmt.Sprintf(`_do() { uid=$1; user=$(getent passwd $uid | cut -d: -f1); [ ! -z "${user}" ] || return %[2]d; userdel "${user}"; return $?; }; _do '%[1]d';`, uid, codeUserNotFound))
 	res, err := ExecuteCommand(ctx, c.s, cmd)
 	if err != nil {
-		return ErrUserUnexpected.Raise(err)
+		return fmt.Errorf("failed to delete user: %w", err)
 	}
 
 	// https://github.com/shadow-maint/shadow/blob/dc9fc048de56aa7b6eaf80b1c068a8b5d59b1bf0/src/userdel.c#L77
@@ -258,7 +245,7 @@ func (c *userClient) Delete(ctx context.Context, uid int) error {
 		// Not interpreted as error because this is the desired state
 		break
 	default:
-		return ErrUser.Raise(fmt.Errorf("failed to delete user with uid %d", uid))
+		return fmt.Errorf("failed to delete user with uid %d", uid)
 	}
 
 	return nil
@@ -274,18 +261,31 @@ type passwdEntry struct {
 
 func parsePasswdEntry(data []byte) (*passwdEntry, error) {
 	parts := strings.Split(strings.TrimSpace(string(data)), ":")
-	if len(parts) != 7 || parts[0] == "" || parts[2] == "" || parts[3] == "" {
-		return nil, ErrUserUnexpected
+
+	if len(parts) != 7 {
+		return nil, fmt.Errorf("invalid password entry, not enough segments")
+	}
+
+	if parts[0] == "" {
+		return nil, fmt.Errorf("invalid password entry, empty name found")
+	}
+
+	if parts[2] == "" {
+		return nil, fmt.Errorf("invalid password entry, empty uid found")
+	}
+
+	if parts[3] == "" {
+		return nil, fmt.Errorf("invalid password entry, empty gid found")
 	}
 
 	uid, err := strconv.Atoi(parts[2])
 	if err != nil {
-		return nil, ErrUserUnexpected
+		return nil, fmt.Errorf("invalid uid, not parsable as an int: %s", parts[2])
 	}
 
 	gid, err := strconv.Atoi(parts[3])
 	if err != nil {
-		return nil, ErrUserUnexpected
+		return nil, fmt.Errorf("invalid gid, not parsable as an int: %s", parts[3])
 	}
 
 	return &passwdEntry{
