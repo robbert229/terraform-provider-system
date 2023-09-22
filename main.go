@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"github.com/neuspaces/terraform-provider-system/internal/provider"
 )
@@ -25,7 +26,7 @@ var (
 	// commit  string = ""
 )
 
-const ProviderAddr = "registry.terraform.io/neuspaces/system"
+const ProviderAddr = "registry.terraform.io/robbert229/system"
 
 func main() {
 	var debugMode bool
