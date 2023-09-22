@@ -1,19 +1,14 @@
 name: release
-
 on:
   push:
     # run only against tags
     tags:
-      - "*"
-
+      - "v*"
 permissions:
   contents: write
-  # packages: write
-  # issues: write
-
 jobs:
-  release:
-    runs-on: ubuntu-22.04
+  goreleaser:
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v3
