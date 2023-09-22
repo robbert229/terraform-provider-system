@@ -61,7 +61,7 @@ func (c *userClient) Get(ctx context.Context, uid int) (*User, error) {
 	}
 
 	if res.ExitCode != 0 || len(res.Stdout) == 0 {
-		return nil, fmt.Errorf("exit code was nonzero, but was given no stdout: %d", res.ExitCode)
+		return nil, fmt.Errorf("exit code was nonzero, but was given no stdout: %d, stderr: \"%s\"", res.ExitCode, res.StderrString())
 	}
 
 	parsedUser, err := parsePasswdEntry(res.Stdout)
@@ -82,7 +82,7 @@ func (c *userClient) Get(ctx context.Context, uid int) (*User, error) {
 	}
 
 	if resGroup.ExitCode != 0 || len(resGroup.Stdout) == 0 {
-		return nil, fmt.Errorf("exit code was nonzero, but was given no stdout: %d", resGroup.ExitCode)
+		return nil, fmt.Errorf("exit code was nonzero, but was given no stdout: %d, stderr: \"%s\"", resGroup.ExitCode, resGroup.StderrString())
 	}
 
 	parsedGroup, err := parseGroupEntry(resGroup.Stdout)
@@ -157,7 +157,7 @@ func (c *userClient) Create(ctx context.Context, u User) (int, error) {
 	}
 
 	if res.ExitCode != 0 || len(res.Stdout) == 0 {
-		return -1, fmt.Errorf("exit code was nonzero, but was given no stdout: %d", res.ExitCode)
+		return -1, fmt.Errorf("exit code was nonzero, but was given no stdout: %d, stderr: \"%s\"", res.ExitCode, res.StderrString())
 	}
 
 	createdUser, err := parsePasswdEntry(res.Stdout)
