@@ -1,16 +1,22 @@
 # Terraform Provider for (Operating) System
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/neuspaces/terraform-provider-system)](https://github.com/neuspaces/terraform-provider-system/releases)
-[![main](https://github.com/neuspaces/terraform-provider-system/actions/workflows/main.yml/badge.svg)](https://github.com/neuspaces/terraform-provider-system/actions/workflows/main.yml)
-[![GitHub Discussions](https://img.shields.io/github/discussions/neuspaces/terraform-provider-system)](https://github.com/neuspaces/terraform-provider-system/discussions)
-[![GitHub License](https://img.shields.io/github/license/neuspaces/terraform-provider-system)](https://github.com/neuspaces/terraform-provider-system/blob/main/LICENSE)
-[![Terraform Registry](https://img.shields.io/badge/terraform-registry-5c4ee5.svg)](https://registry.terraform.io/providers/neuspaces/system/latest)
+## NOTICE: EXPERIMENTAL
 
-Releases: [registry.terraform.io](https://registry.terraform.io/providers/neuspaces/system/latest)
+This is a fork of https://github.com/neuspaces/terraform-provider-system
 
-Documentation: [registry.terraform.io](https://registry.terraform.io/providers/neuspaces/system/latest/docs)
+It is highly experimental, and may not be working. Use at your own risk.
 
-Discuss: [github.com/discussions](https://github.com/neuspaces/terraform-provider-system/discussions)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/robbert229/terraform-provider-system)](https://github.com/robbert229/terraform-provider-system/releases)
+[![main](https://github.com/robbert229/terraform-provider-system/actions/workflows/main.yml/badge.svg)](https://github.com/robbert229/terraform-provider-system/actions/workflows/main.yml)
+[![GitHub Discussions](https://img.shields.io/github/discussions/robbert229/terraform-provider-system)](https://github.com/robbert229/terraform-provider-system/discussions)
+[![GitHub License](https://img.shields.io/github/license/robbert229/terraform-provider-system)](https://github.com/robbert229/terraform-provider-system/blob/main/LICENSE)
+[![Terraform Registry](https://img.shields.io/badge/terraform-registry-5c4ee5.svg)](https://registry.terraform.io/providers/robbert229/system/latest)
+
+Releases: [registry.terraform.io](https://registry.terraform.io/providers/robbert229/system/latest)
+
+Documentation: [registry.terraform.io](https://registry.terraform.io/providers/robbert229/system/latest/docs)
+
+Discuss: [github.com/discussions](https://github.com/robbert229/terraform-provider-system/discussions)
 
 The Terraform Provider for (Linux Operating) System allows managing files, directories, users, groups, packages, and services on remote servers on operating system level agent-less via SSH.
 
@@ -26,7 +32,7 @@ The Terraform Provider for (Linux Operating) System allows managing files, direc
 
 ## Quick Starts
 
-- [Using the provider](https://registry.terraform.io/providers/neuspaces/system/latest/docs)
+- [Using the provider](https://registry.terraform.io/providers/robbert229/system/latest/docs)
 - [Examples](examples)
 
 ## Use Cases
@@ -40,11 +46,11 @@ The provider is not suitable for *immutable infrastructure* approaches such as f
 
 ## User documentation
 
-Refer to the comprehensive [user documentation of the provider in the Terraform Registry](https://registry.terraform.io/providers/neuspaces/system/latest/docs).
+Refer to the comprehensive [user documentation of the provider in the Terraform Registry](https://registry.terraform.io/providers/robbert229/system/latest/docs).
 
 ## Frequently Asked Questions
 
-Responses to the most frequently asked questions can be found in the [FAQ](https://registry.terraform.io/providers/neuspaces/system/latest/docs/guides/faq).
+Responses to the most frequently asked questions can be found in the [FAQ](https://registry.terraform.io/providers/robbert229/system/latest/docs/guides/faq).
 
 ## Requirements
 
